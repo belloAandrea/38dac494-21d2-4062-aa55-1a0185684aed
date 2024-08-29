@@ -1,0 +1,46 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to Vercel
+        run: |
+          DEPLOYMENT_RESPONSE=$(curl -s -X POST https://api.vercel.com/v13/deployments \
+          -H "Authorization: Bearer 3ZJQTnLWfnRk7S281T4r6nXY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "marketplace",
+            "target": "production",
+            "gitSource": {
+              "type": "github",
+              "repoId": "belloaandrea",
+              "branch": "main"
+            }
+          }')
+          echo "Deployment response: $DEPLOYMENT_RESPONSE"
+          DEPLOYMENT_URL=$(echo $DEPLOYMENT_RESPONSE | jq -r .url)
+          echo "Vercel Deployment URL: $DEPLOYMENT_URL"
+          echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_ENV
+
+      - name: Print Deployment URL
+        run: echo "Deployment URL: ${{ env.DEPLOYMENT_URL }}"
